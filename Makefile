@@ -13,9 +13,9 @@ FCINCLUDE += -I$(RRTMGP_BUILD)
 # netcdf library, module files
 # C and Fortran interfaces respectively
 #
-NCHOME = /opt/local
-NFHOME = /Users/robert/Applications/$(FC)
-FCINCLUDE += -I$(NFHOME)/include
+NCHOME = /nas/project/p1770/dependencies
+NFHOME = /nas/project/p1770/dependencies
+FCINCLUDE += -I/nas/project/p1770/dependencies/include
 LDFLAGS   += -L$(NFHOME)/lib -L$(NCHOME)/lib
 LIBS      += -lnetcdff -lnetcdf
 
