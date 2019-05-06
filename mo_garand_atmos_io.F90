@@ -190,6 +190,7 @@ contains
                                 intent(in) :: bnd_flux_up, bnd_flux_dn, bnd_flux_net
     ! -------------------
     integer :: ncid, ncol, nlev, nband
+    real(wp), dimension(:,:,:), allocatable :: band_out
     ! -------------------
     if(nf90_open(trim(fileName), NF90_WRITE, ncid) /= NF90_NOERR) &
       call stop_on_err("write_fluxes: can't open file " // trim(fileName))
@@ -200,6 +201,7 @@ contains
     ncol  = get_dim_size(ncid, 'col')
     nlev  = get_dim_size(ncid, 'lev')
     nband = get_dim_size(ncid, 'band')
+    allocate(band_out(nband, ncol, nlev))
 
     call create_var(ncid,      "flux_up",          ["col",  "lev"],         [ncol, nlev])
     call create_var(ncid,      "flux_dn",          ["col",  "lev"],         [ncol, nlev])
@@ -212,9 +214,12 @@ contains
     call stop_on_err(write_field(ncid, "flux_dn",  flux_dn ))
     call stop_on_err(write_field(ncid, "flux_net", flux_net))
     ! col,lay,bnd -> bnd,col,lay
-    if(present(bnd_flux_up )) call stop_on_err(write_field(ncid, "band_flux_up",  reorder123x312(bnd_flux_up )))
-    if(present(bnd_flux_dn )) call stop_on_err(write_field(ncid, "band_flux_dn",  reorder123x312(bnd_flux_dn )))
-    if(present(bnd_flux_net)) call stop_on_err(write_field(ncid, "band_flux_net", reorder123x312(bnd_flux_net)))
+    if(present(bnd_flux_up )) call reorder123x312(bnd_flux_up, band_out)
+    if(present(bnd_flux_up )) call stop_on_err(write_field(ncid, "band_flux_up",  band_out))
+    if(present(bnd_flux_dn )) call reorder123x312(bnd_flux_dn, band_out)
+    if(present(bnd_flux_dn )) call stop_on_err(write_field(ncid, "band_flux_dn",  band_out))
+    if(present(bnd_flux_net)) call reorder123x312(bnd_flux_net, band_out)
+    if(present(bnd_flux_net)) call stop_on_err(write_field(ncid, "band_flux_net", band_out))
 
     ncid = nf90_close(ncid)
   end subroutine write_fluxes
@@ -228,7 +233,9 @@ contains
     real(wp), dimension(:,:,:), optional, &
                                 intent(in) :: bnd_flux_dir
     ! -------------------
-    integer :: ncid, ncol, nlay, nband
+    integer :: ncid
+    integer :: ncol, nlay, nband
+    real(wp), dimension(:,:,:), allocatable :: band_out
     ! -------------------
     if(nf90_open(trim(fileName), NF90_WRITE, ncid) /= NF90_NOERR) &
       call stop_on_err("write_dir_fluxes: can't open file " // trim(fileName))
@@ -240,12 +247,14 @@ contains
     ncol  = get_dim_size(ncid, 'col')
     nlay  = get_dim_size(ncid, 'lay')
     nband = get_dim_size(ncid, 'band')
+    allocate(band_out(nband, ncol, nlay+1))
 
     call create_var(ncid,      "flux_dir_dn",         ["col",  "lev"],         [ncol, nlay+1])
     if(present(bnd_flux_dir)) call create_var(ncid, "band_flux_dir_dn", ["band", "col ", "lev "], [nband, ncol, nlay+1])
 
     call stop_on_err(write_field(ncid, "flux_dir_dn",  flux_dir))
-    if(present(bnd_flux_dir)) call stop_on_err(write_field(ncid, "band_flux_dir_dn",  reorder123x312(bnd_flux_dir)))
+    if(present(bnd_flux_dir)) call reorder123x312(bnd_flux_dir, band_out)
+    if(present(bnd_flux_dir)) call stop_on_err(write_field(ncid, "band_flux_dir_dn",  band_out))
 
     ncid = nf90_close(ncid)
   end subroutine write_dir_fluxes
@@ -259,6 +268,7 @@ contains
     real(wp), dimension(:,:,:), intent(in) :: bnd_heating_rate
     ! -------------------
     integer :: ncid, ncol, nlay, nband
+    real(wp), dimension(:,:,:), allocatable :: band_out
     ! -------------------
     if(nf90_open(trim(fileName), NF90_WRITE, ncid) /= NF90_NOERR) &
       call stop_on_err("write_heating_rates: can't open file " // trim(fileName))
@@ -270,12 +280,14 @@ contains
     ncol  = get_dim_size(ncid, 'col')
     nlay  = get_dim_size(ncid, 'lay')
     nband = get_dim_size(ncid, 'band')
+    allocate(band_out(nband, ncol, nlay))
 
     call create_var(ncid,      "heating_rate",          ["col", "lay"],         [ncol, nlay])
     call create_var(ncid, "band_heating_rate", ["band", "col ", "lay "], [nband, ncol, nlay])
 
     call stop_on_err(write_field(ncid,     "heating_rate",                     heating_rate))
-    call stop_on_err(write_field(ncid, "band_heating_rate", reorder123x312(bnd_heating_rate)))
+    call reorder123x312(bnd_heating_rate, band_out)
+    call stop_on_err(write_field(ncid, "band_heating_rate", band_out))
 
     ncid = nf90_close(ncid)
   end subroutine write_heating_rates
@@ -288,6 +300,7 @@ contains
     class(ty_optical_props), intent(in) :: spectral_disc
     ! -------------------
     integer :: ncid, nband
+    real(wp), dimension(:,:,:), allocatable :: band_out
     ! -------------------
     if(nf90_open(trim(fileName), NF90_WRITE, ncid) /= NF90_NOERR) &
       call stop_on_err("write_spectral_disc: can't open file " // trim(fileName))
